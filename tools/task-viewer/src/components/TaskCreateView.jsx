@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 function TaskCreateView({ onClose, profileId, onTaskCreated, allTasks }) {
+  console.log('TaskCreateView rendered');
   const { t } = useTranslation();
   const [newTask, setNewTask] = useState({
     name: '',
@@ -105,11 +106,13 @@ function TaskCreateView({ onClose, profileId, onTaskCreated, allTasks }) {
     }
   };
 
+  console.log('TaskCreateView: Rendering modal, showCreateTaskModal:', true);
+  console.log('TaskCreateView: onClose function:', typeof onClose);
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content task-create-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" style={{zIndex: 99999, backgroundColor: 'rgba(0, 0, 0, 0.8)', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center'}} onClick={onClose}>
+      <div className="modal-content task-create-modal" style={{zIndex: 100000, backgroundColor: '#16213e', borderRadius: '10px', padding: '30px', maxWidth: '500px', width: '90%', border: '2px solid #4fbdba'}} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{t('createNewTask')}</h2>
+          <h2>{t('createTask.title')}</h2>
           <button className="close-button" onClick={onClose} title={t('close')}>
             ×
           </button>
@@ -124,7 +127,7 @@ function TaskCreateView({ onClose, profileId, onTaskCreated, allTasks }) {
               className="form-input"
               value={newTask.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder={t('enterTaskName')}
+              placeholder={t('createTask.namePlaceholder')}
               required
             />
           </div>
@@ -136,7 +139,7 @@ function TaskCreateView({ onClose, profileId, onTaskCreated, allTasks }) {
               className="form-textarea"
               value={newTask.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder={t('enterTaskDescription')}
+              placeholder={t('createTask.descriptionPlaceholder')}
               rows={4}
               required
             />
@@ -149,7 +152,7 @@ function TaskCreateView({ onClose, profileId, onTaskCreated, allTasks }) {
               className="form-textarea"
               value={newTask.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
-              placeholder={t('enterTaskNotes')}
+              placeholder={t('createTask.notesPlaceholder')}
               rows={3}
             />
           </div>
@@ -161,7 +164,7 @@ function TaskCreateView({ onClose, profileId, onTaskCreated, allTasks }) {
               className="form-textarea"
               value={newTask.implementationGuide}
               onChange={(e) => handleInputChange('implementationGuide', e.target.value)}
-              placeholder={t('enterImplementationGuide')}
+              placeholder={t('createTask.implementationGuidePlaceholder')}
               rows={6}
             />
           </div>
@@ -173,7 +176,7 @@ function TaskCreateView({ onClose, profileId, onTaskCreated, allTasks }) {
               className="form-textarea"
               value={newTask.verificationCriteria}
               onChange={(e) => handleInputChange('verificationCriteria', e.target.value)}
-              placeholder={t('enterVerificationCriteria')}
+              placeholder={t('createTask.verificationCriteriaPlaceholder')}
               rows={4}
             />
           </div>
@@ -186,7 +189,7 @@ function TaskCreateView({ onClose, profileId, onTaskCreated, allTasks }) {
               value={newTask.agent}
               onChange={(e) => handleInputChange('agent', e.target.value)}
             >
-              <option value="">{t('noAgentAssigned')}</option>
+              <option value="">{t('createTask.agentPlaceholder')}</option>
               {availableAgents.map((agent) => {
                 const agentBaseName = agent.name.replace(/\.(md|yaml|yml)$/, '');
                 return (
@@ -216,7 +219,7 @@ function TaskCreateView({ onClose, profileId, onTaskCreated, allTasks }) {
                   </div>
                 ))
               ) : (
-                <p className="no-dependencies-message">{t('noTasksAvailableForDependencies')}</p>
+                <p className="no-dependencies-message">{t('createTask.dependenciesPlaceholder')}</p>
               )}
             </div>
           </div>
@@ -231,7 +234,7 @@ function TaskCreateView({ onClose, profileId, onTaskCreated, allTasks }) {
             onClick={handleSave}
             disabled={isSaving}
           >
-            {isSaving ? t('creating') : t('createTask')}
+            {isSaving ? t('creating') : t('createTask.create')}
           </button>
           <button 
             className="secondary-btn"

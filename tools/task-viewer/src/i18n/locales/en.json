@@ -172,7 +172,9 @@
       "expand": "Expand",
       "minimize": "Minimize",
       "close": "Close"
-    }
+    },
+    "createTaskButton": "Create Task",
+    "taskCreated": "✅ Task '{taskName}' has been created successfully"
   },
   "notifications": {
     "profileCreatedSuccess": "Profile created successfully",

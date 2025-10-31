@@ -18,6 +18,7 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
   const { t } = useTranslation();
   const [selectedTask, setSelectedTask] = useState(null);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
+  const createTaskModalRef = useRef(showCreateTaskModal); // Ref to track modal state across re-renders
   const [availableAgents, setAvailableAgents] = useState([]);
   const [savingAgents, setSavingAgents] = useState({});
   const [agentModalInfo, setAgentModalInfo] = useState({ isOpen: false, agent: null, taskId: null });
@@ -75,8 +76,15 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
     if (resetDetailView && resetDetailView > 0) {
       console.log('TaskTable: Resetting selected task to null');
       setSelectedTask(null);
+      // Don't reset the modal state during auto-refresh
+      // setShowCreateTaskModal(false);
     }
   }, [resetDetailView]);
+  
+  // Sync ref with state whenever it changes
+  useEffect(() => {
+    createTaskModalRef.current = showCreateTaskModal;
+  }, [showCreateTaskModal]);
   
   // Notify parent when detail view changes
   useEffect(() => {
@@ -681,6 +689,7 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
   };
 
   // Otherwise, show the table
+  console.log('TaskTable render: showCreateTaskModal:', showCreateTaskModal);
   return (
     <>
       {showCreateTaskModal && (
@@ -713,7 +722,16 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
       <div className="table-header-actions">
         <button
           className="create-task-button"
-          onClick={() => setShowCreateTaskModal(true)}
+          onClick={() => {
+            console.log('Create task button clicked');
+            console.log('Before setShowCreateTaskModal, showCreateTaskModal:', showCreateTaskModal);
+            setShowCreateTaskModal(true);
+            console.log('After setShowCreateTaskModal, showCreateTaskModal should be true');
+            // Force a re-render
+            setTimeout(() => {
+              console.log('In setTimeout, showCreateTaskModal should be true');
+            }, 100);
+          }}
           title={t('createTask.title')}
         >
           ➕ {t('createTask.title')}

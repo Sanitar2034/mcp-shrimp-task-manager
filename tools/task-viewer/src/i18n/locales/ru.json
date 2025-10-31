@@ -162,7 +162,9 @@
       "expand": "Развернуть",
       "minimize": "Свернуть",
       "close": "Закрыть"
-    }
+    },
+    "createTaskButton": "Создать задачу",
+    "taskCreated": "✅ Задача '{taskName}' успешно создана"
   },
   "notifications": {
     "profileCreatedSuccess": "Профиль успешно создан",

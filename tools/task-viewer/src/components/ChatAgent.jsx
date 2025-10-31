@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import MDEditor from '@uiw/react-md-editor';
+import TaskCreateView from './TaskCreateView';
 
 function ChatAgent({ 
   currentPage, 
@@ -23,6 +24,7 @@ function ChatAgent({
   const [availableAgents, setAvailableAgents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [agentsLoading, setAgentsLoading] = useState(false);
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
   const [openAIKey, setOpenAIKey] = useState('');
   const [agentsExpanded, setAgentsExpanded] = useState(() => {
     // Load expanded state from localStorage
@@ -354,6 +356,18 @@ function ChatAgent({
     }
   };
 
+  const handleTaskCreated = (createdTask) => {
+    setShowCreateTaskModal(false);
+    // Add a system message about the new task
+    const systemMessage = {
+      id: Date.now(),
+      role: 'system',
+      content: t('chat.taskCreated', { taskName: createdTask.name }),
+      timestamp: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, systemMessage]);
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -645,6 +659,13 @@ function ChatAgent({
               rows="2"
             />
             <button
+              className="chat-create-task-btn"
+              onClick={() => setShowCreateTaskModal(true)}
+              title={t('createTaskButton')}
+            >
+              📝
+            </button>
+            <button
               className="chat-send-btn"
               onClick={handleSendMessage}
               disabled={isLoading || !inputMessage.trim()}
@@ -653,6 +674,15 @@ function ChatAgent({
             </button>
           </div>
         </>
+      )}
+      
+      {showCreateTaskModal && (
+        <TaskCreateView
+          onClose={() => setShowCreateTaskModal(false)}
+          profileId={profileId}
+          onTaskCreated={handleTaskCreated}
+          allTasks={tasks}
+        />
       )}
     </div>
   );
