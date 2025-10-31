@@ -237,5 +237,31 @@
   "inProgress": "В ПРОЦЕССЕ",
   "pending": "ОЖИДАЕТ",
   "autoRefresh": "Автообновление",
-  "searchTasksPlaceholder": "Поиск задач..."
+  "searchTasksPlaceholder": "Поиск задач...",
+  "createTask": {
+    "title": "Создать новую задачу",
+    "name": "Название задачи",
+    "namePlaceholder": "Введите название задачи",
+    "description": "Описание",
+    "descriptionPlaceholder": "Введите описание задачи",
+    "notes": "Заметки",
+    "notesPlaceholder": "Дополнительные заметки (необязательно)",
+    "implementationGuide": "Руководство по реализации",
+    "implementationGuidePlaceholder": "Шаги для реализации этой задачи",
+    "verificationCriteria": "Критерии верификации",
+    "verificationCriteriaPlaceholder": "Как проверить, что задача выполнена",
+    "agent": "Агент",
+    "agentPlaceholder": "Выберите агента",
+    "dependencies": "Зависимости",
+    "dependenciesPlaceholder": "Выберите задачи, от которых зависит эта задача",
+    "create": "Создать задачу",
+    "cancel": "Отмена",
+    "creating": "Создание...",
+    "success": "Задача успешно создана",
+    "error": "Не удалось создать задачу",
+    "validation": {
+      "nameRequired": "Название задачи обязательно",
+      "descriptionRequired": "Описание задачи обязательно"
+    }
+  }
 }

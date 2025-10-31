@@ -8,6 +8,7 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import TaskDetailView from './TaskDetailView';
+import TaskCreateView from './TaskCreateView';
 import Tooltip from './Tooltip';
 import AgentInfoModal from './AgentInfoModal';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +17,7 @@ import { generateTaskNumbers, getTaskNumber, convertDependenciesToNumbers, getTa
 function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDetailViewChange, resetDetailView, profileId, onTaskSaved, onDeleteTask, showToast }) {
   const { t } = useTranslation();
   const [selectedTask, setSelectedTask] = useState(null);
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
   const [availableAgents, setAvailableAgents] = useState([]);
   const [savingAgents, setSavingAgents] = useState({});
   const [agentModalInfo, setAgentModalInfo] = useState({ isOpen: false, agent: null, taskId: null });
@@ -636,9 +638,25 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
   // Otherwise, show the table
   return (
     <>
+      {showCreateTaskModal && (
+        <TaskCreateView
+          onClose={() => setShowCreateTaskModal(false)}
+          profileId={profileId}
+          onTaskCreated={(createdTask) => {
+            setShowCreateTaskModal(false);
+            if (onTaskSaved) {
+              onTaskSaved();
+            }
+            if (showToast) {
+              showToast('success', t('createTask.success'));
+            }
+          }}
+          allTasks={data}
+        />
+      )}
       {showBulkActions && (
         <div className="bulk-actions-bar">
-          <button 
+          <button
             className="bulk-action-button ai-assign"
             onClick={handleBulkAssignAgents}
             disabled={loading}
@@ -647,6 +665,16 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
           </button>
         </div>
       )}
+      <div className="table-header-actions">
+        <button
+          className="create-task-button"
+          onClick={() => setShowCreateTaskModal(true)}
+          title={t('createTask.title')}
+        >
+          ➕ {t('createTask.title')}
+        </button>
+      </div>
+      
       <table className="table">
         <thead>
           {table.getHeaderGroups().map(headerGroup => (

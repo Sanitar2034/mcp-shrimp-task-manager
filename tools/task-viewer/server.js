@@ -755,6 +755,92 @@ async function startServer() {
         res.writeHead(500, { "Content-Type": "text/plain" });
         res.end("Error deleting task: " + err.message);
       }
+    } else if (
+      url.pathname.startsWith("/api/tasks/") &&
+      url.pathname.endsWith("/create") &&
+      req.method === "POST"
+    ) {
+      // Handle task creation
+      const pathParts = url.pathname.split("/");
+      const projectId = pathParts[pathParts.length - 2];
+      const project = projects.find((p) => p.id === projectId);
+
+      if (!project) {
+        res.writeHead(404, { "Content-Type": "text/plain" });
+        res.end("Project not found");
+        return;
+      }
+
+      let body = "";
+      req.on("data", (chunk) => (body += chunk.toString()));
+      req.on("end", async () => {
+        try {
+          const taskData = JSON.parse(body);
+
+          // Validate required fields
+          if (!taskData.name || !taskData.name.trim()) {
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            res.end("Task name is required");
+            return;
+          }
+
+          if (!taskData.description || !taskData.description.trim()) {
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            res.end("Task description is required");
+            return;
+          }
+
+          // Read current tasks
+          let tasksData;
+          try {
+            const data = await fs.readFile(project.path, "utf8");
+            tasksData = JSON.parse(data);
+          } catch (err) {
+            // If file doesn't exist, create empty structure
+            tasksData = { tasks: [] };
+          }
+
+          // Generate a unique ID for the new task
+          const generateTaskId = () => {
+            return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+              /[xy]/g,
+              function (c) {
+                const r = (Math.random() * 16) | 0;
+                const v = c === "x" ? r : (r & 0x3) | 0x8;
+                return v.toString(16);
+              }
+            );
+          };
+
+          // Create new task object
+          const newTask = {
+            id: generateTaskId(),
+            name: taskData.name.trim(),
+            description: taskData.description.trim(),
+            notes: taskData.notes || "",
+            implementationGuide: taskData.implementationGuide || "",
+            verificationCriteria: taskData.verificationCriteria || "",
+            agent: taskData.agent || "",
+            dependencies: taskData.dependencies || [],
+            status: "pending",
+            createdAt: getLocalISOString(),
+            updatedAt: getLocalISOString(),
+          };
+
+          // Add to tasks array
+          tasksData.tasks.push(newTask);
+
+          // Write back to file
+          await fs.writeFile(project.path, JSON.stringify(tasksData, null, 2));
+
+          res.writeHead(201, { "Content-Type": "application/json" });
+          res.end(JSON.stringify(newTask));
+        } catch (err) {
+          console.error("Error creating task:", err);
+          res.writeHead(500, { "Content-Type": "text/plain" });
+          res.end("Error creating task: " + err.message);
+        }
+      });
     } else if (url.pathname.startsWith("/api/tasks/")) {
       const projectId = url.pathname.split("?")[0].split("/").pop();
       const project = projects.find((p) => p.id === projectId);

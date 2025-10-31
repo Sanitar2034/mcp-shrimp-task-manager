@@ -224,5 +224,31 @@
   "inProgress": "IN PROGRESS",
   "pending": "PENDING",
   "autoRefresh": "Auto Refresh",
-  "searchTasksPlaceholder": "Search tasks..."
+  "searchTasksPlaceholder": "Search tasks...",
+  "createTask": {
+    "title": "Create New Task",
+    "name": "Task Name",
+    "namePlaceholder": "Enter task name",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter task description",
+    "notes": "Notes",
+    "notesPlaceholder": "Additional notes (optional)",
+    "implementationGuide": "Implementation Guide",
+    "implementationGuidePlaceholder": "Steps to implement this task",
+    "verificationCriteria": "Verification Criteria",
+    "verificationCriteriaPlaceholder": "How to verify this task is complete",
+    "agent": "Agent",
+    "agentPlaceholder": "Select an agent",
+    "dependencies": "Dependencies",
+    "dependenciesPlaceholder": "Select tasks this depends on",
+    "create": "Create Task",
+    "cancel": "Cancel",
+    "creating": "Creating...",
+    "success": "Task created successfully",
+    "error": "Failed to create task",
+    "validation": {
+      "nameRequired": "Task name is required",
+      "descriptionRequired": "Task description is required"
+    }
+  }
 }
