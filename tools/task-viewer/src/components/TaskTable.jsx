@@ -530,8 +530,8 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
       );
     } else {
       return (
-        <TaskDetailView 
-          task={selectedTask} 
+        <TaskDetailView
+          task={selectedTask}
           onBack={() => setSelectedTask(null)}
           projectRoot={projectRoot}
           onNavigateToTask={(taskId) => {
@@ -544,6 +544,51 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
           allTasks={data}
           onEdit={() => {
             setSelectedTask({ ...selectedTask, editMode: true });
+          }}
+          onStatusChange={async (taskId, newStatus) => {
+            try {
+              const response = await fetch(`/api/tasks/${profileId}/update`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  taskId: taskId,
+                  updates: { status: newStatus }
+                })
+              });
+              
+              if (response.ok) {
+                // Update local state immediately for better UX
+                setSelectedTask(prev => ({
+                  ...prev,
+                  status: newStatus,
+                  updatedAt: new Date().toISOString()
+                }));
+                
+                // Update tasks list as well
+                const updatedTasks = data.map(task =>
+                  task.id === taskId
+                    ? { ...task, status: newStatus, updatedAt: new Date().toISOString() }
+                    : task
+                );
+                
+                // Show success message
+                if (showToast) {
+                  showToast('Task status updated successfully', 'success');
+                }
+              } else {
+                console.error('Failed to update task status');
+                if (showToast) {
+                  showToast('Failed to update task status', 'error');
+                }
+              }
+            } catch (err) {
+              console.error('Error updating task status:', err);
+              if (showToast) {
+                showToast('Error updating task status: ' + err.message, 'error');
+              }
+            }
           }}
         />
       );

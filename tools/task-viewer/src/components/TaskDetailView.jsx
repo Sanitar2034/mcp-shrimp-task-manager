@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-function TaskDetailView({ task, onBack, projectRoot, onNavigateToTask, taskIndex, allTasks, isHistorical = false, onEdit }) {
+function TaskDetailView({ task, onBack, projectRoot, onNavigateToTask, taskIndex, allTasks, isHistorical = false, onEdit, onStatusChange }) {
   const { t } = useTranslation();
   
   // Keyboard navigation
@@ -147,9 +147,36 @@ function TaskDetailView({ task, onBack, projectRoot, onNavigateToTask, taskIndex
         <div className="task-detail-section">
           <div className="detail-row">
             <span className="detail-label">Status:</span>
-            <span className={`status-badge status-${task.status}`} style={{ backgroundColor: getStatusColor(task.status) }}>
-              {task.status?.replace('_', ' ')}
-            </span>
+            {!isHistorical ? (
+              <select
+                className="status-selector"
+                value={task.status}
+                onChange={(e) => {
+                  const newStatus = e.target.value;
+                  // Call the onStatusChange function if provided
+                  if (onStatusChange) {
+                    onStatusChange(task.id, newStatus);
+                  }
+                }}
+                style={{
+                  backgroundColor: getStatusColor(task.status),
+                  color: 'white',
+                  border: 'none',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="blocked">Blocked</option>
+              </select>
+            ) : (
+              <span className={`status-badge status-${task.status}`} style={{ backgroundColor: getStatusColor(task.status) }}>
+                {task.status?.replace('_', ' ')}
+              </span>
+            )}
           </div>
           
           <div className="detail-row">

@@ -917,6 +917,37 @@ a:visited {
   color: white;
 }
 
+/* Status selector styles */
+.status-selector {
+  padding: 6px 10px;
+  background-color: #2a2f3f;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.status-selector:hover {
+  border-color: #4fbdba;
+  background-color: #34495e;
+}
+
+.status-selector:focus {
+  outline: none;
+  border-color: #4fbdba;
+  box-shadow: 0 0 0 2px rgba(79, 189, 186, 0.2);
+}
+
+.status-selector option {
+  background-color: #2a2f3f;
+  color: white;
+  padding: 8px;
+}
+
 .task-number {
   background: #0f4c75;
   color: white;
