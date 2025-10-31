@@ -127,7 +127,18 @@
     "settings": "⚙️ Global Settings",
     "settingsDesc": "Configure application global settings.",
     "openaiApiKey": "OpenAI API Key",
-    "openaiApiKeyPlaceholder": "Enter OpenAI API Key"
+    "openaiApiKeyPlaceholder": "Enter OpenAI API Key",
+    "apiHostname": "API Hostname",
+    "apiHostnamePlaceholder": "localhost",
+    "apiPort": "API Port",
+    "apiPortPlaceholder": "3005",
+    "apiPath": "API Path",
+    "apiPathPlaceholder": "/v1/chat/completions",
+    "apiProtocol": "Connection Protocol",
+    "apiProtocolHttp": "HTTP",
+    "apiProtocolHttps": "HTTPS",
+    "apiConfiguration": "⚙️ API Configuration",
+    "apiConfigurationDesc": "Configure API connection parameters for AI agent interactions."
   },
   "chat": {
     "title": "AI Chat Assistant",

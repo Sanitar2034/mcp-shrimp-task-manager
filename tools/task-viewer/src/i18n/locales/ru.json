@@ -117,7 +117,18 @@
     "settings": "⚙️ Глобальные настройки",
     "settingsDesc": "Настройка глобальных параметров приложения.",
     "openaiApiKey": "Ключ API OpenAI",
-    "openaiApiKeyPlaceholder": "Введите ключ API OpenAI"
+    "openaiApiKeyPlaceholder": "Введите ключ API OpenAI",
+    "apiHostname": "Имя хоста API",
+    "apiHostnamePlaceholder": "localhost",
+    "apiPort": "Порт API",
+    "apiPortPlaceholder": "3005",
+    "apiPath": "Путь API",
+    "apiPathPlaceholder": "/v1/chat/completions",
+    "apiProtocol": "Протокол подключения",
+    "apiProtocolHttp": "HTTP",
+    "apiProtocolHttps": "HTTPS",
+    "apiConfiguration": "⚙️ Настройки API",
+    "apiConfigurationDesc": "Настройте параметры подключения к API для взаимодействия с ИИ-агентами."
   },
   "chat": {
     "title": "ИИ-помощник чата",

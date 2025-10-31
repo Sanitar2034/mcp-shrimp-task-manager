@@ -5,6 +5,10 @@ function GlobalSettingsView({ showToast }) {
   const { t } = useTranslation();
   const [claudeFolderPath, setClaudeFolderPath] = useState('');
   const [openAIKey, setOpenAIKey] = useState('');
+  const [apiHostname, setApiHostname] = useState('localhost');
+  const [apiPort, setApiPort] = useState(3005);
+  const [apiPath, setApiPath] = useState('/v1/chat/completions');
+  const [apiProtocol, setApiProtocol] = useState('http');
   const [showApiKey, setShowApiKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -23,6 +27,10 @@ function GlobalSettingsView({ showToast }) {
         const settings = await response.json();
         setClaudeFolderPath(settings.claudeFolderPath || '');
         setOpenAIKey(settings.openAIKey || '');
+        setApiHostname(settings.apiHostname || 'localhost');
+        setApiPort(settings.apiPort || 3005);
+        setApiPath(settings.apiPath || '/v1/chat/completions');
+        setApiProtocol(settings.apiProtocol || 'http');
       } else {
         console.error('Failed to load global settings');
         if (showToast) {
@@ -52,6 +60,10 @@ function GlobalSettingsView({ showToast }) {
         body: JSON.stringify({
           claudeFolderPath: claudeFolderPath,
           openAIKey: openAIKey,
+          apiHostname: apiHostname,
+          apiPort: apiPort,
+          apiPath: apiPath,
+          apiProtocol: apiProtocol,
         }),
       });
 
@@ -144,6 +156,62 @@ function GlobalSettingsView({ showToast }) {
               </a>
               {' '}(requires OpenAI account)
             </span>
+          </div>
+
+          <div className="form-group">
+            <h3>{t('apiConfiguration')}</h3>
+            <p className="form-description">{t('apiConfigurationDesc')}</p>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="apiProtocol">{t('apiProtocol')}:</label>
+                <select
+                  id="apiProtocol"
+                  value={apiProtocol}
+                  onChange={(e) => setApiProtocol(e.target.value)}
+                  disabled={saving}
+                >
+                  <option value="http">{t('apiProtocolHttp')}</option>
+                  <option value="https">{t('apiProtocolHttps')}</option>
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="apiHostname">{t('apiHostname')}:</label>
+                <input
+                  type="text"
+                  id="apiHostname"
+                  value={apiHostname}
+                  onChange={(e) => setApiHostname(e.target.value)}
+                  placeholder={t('apiHostnamePlaceholder')}
+                  disabled={saving}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="apiPort">{t('apiPort')}:</label>
+                <input
+                  type="number"
+                  id="apiPort"
+                  value={apiPort}
+                  onChange={(e) => setApiPort(e.target.value)}
+                  placeholder={t('apiPortPlaceholder')}
+                  disabled={saving}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="apiPath">{t('apiPath')}:</label>
+                <input
+                  type="text"
+                  id="apiPath"
+                  value={apiPath}
+                  onChange={(e) => setApiPath(e.target.value)}
+                  placeholder={t('apiPathPlaceholder')}
+                  disabled={saving}
+                />
+              </div>
+            </div>
           </div>
           
           <div className="form-actions">

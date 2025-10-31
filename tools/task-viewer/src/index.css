@@ -5121,3 +5121,21 @@ a:visited {
 .agent-cell-wrapper .agent-dropdown-container {
   flex: 1;
 }
+
+/* Form row styles for API configuration */
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.form-row .form-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.form-description {
+  margin-bottom: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+}
