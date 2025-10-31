@@ -135,10 +135,7 @@
     "apiPath": "API Path",
     "apiPathPlaceholder": "/v1/chat/completions",
     "apiProtocol": "Connection Protocol",
-    "apiProtocolHttp": "HTTP",
-    "apiProtocolHttps": "HTTPS",
-    "apiConfiguration": "⚙️ API Configuration",
-    "apiConfigurationDesc": "Configure API connection parameters for AI agent interactions."
+    "apiConfiguration": "⚙️ API Configuration"
   },
   "chat": {
     "title": "AI Chat Assistant",

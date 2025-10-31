@@ -1168,6 +1168,16 @@ a:visited {
     gap: 10px;
     justify-content: center;
   }
+  
+  /* Make form rows stack on mobile */
+  .form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 20px;
+  }
 }
 
 /* Modal Styles */
@@ -1275,6 +1285,17 @@ a:visited {
 
 .form-group {
   margin-bottom: 20px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
 }
 
 .form-group label {

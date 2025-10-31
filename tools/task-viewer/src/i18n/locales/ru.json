@@ -125,10 +125,7 @@
     "apiPath": "Путь API",
     "apiPathPlaceholder": "/v1/chat/completions",
     "apiProtocol": "Протокол подключения",
-    "apiProtocolHttp": "HTTP",
-    "apiProtocolHttps": "HTTPS",
-    "apiConfiguration": "⚙️ Настройки API",
-    "apiConfigurationDesc": "Настройте параметры подключения к API для взаимодействия с ИИ-агентами."
+    "apiConfiguration": "⚙️ Настройки API"
   },
   "chat": {
     "title": "ИИ-помощник чата",
