@@ -659,13 +659,6 @@ function ChatAgent({
               rows="2"
             />
             <button
-              className="chat-create-task-btn"
-              onClick={() => setShowCreateTaskModal(true)}
-              title={t('createTaskButton')}
-            >
-              📝
-            </button>
-            <button
               className="chat-send-btn"
               onClick={handleSendMessage}
               disabled={isLoading || !inputMessage.trim()}
