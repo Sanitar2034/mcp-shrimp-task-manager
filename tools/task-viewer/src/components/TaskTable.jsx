@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { generateTaskNumbers, getTaskNumber, convertDependenciesToNumbers, getTaskByNumber } from '../utils/taskNumbering';
 
 function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDetailViewChange, resetDetailView, profileId, onTaskSaved, onDeleteTask, showToast }) {
+  // All hooks must be called before any conditional returns
   const { t } = useTranslation();
   const [selectedTask, setSelectedTask] = useState(null);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
@@ -28,6 +29,9 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
   
   // Generate task number mapping
   const taskNumberMap = useMemo(() => generateTaskNumbers(data), [data]);
+  
+  // Checkbox ref for select all
+  const selectAllCheckboxRef = useRef(null);
   
   // Load available agents on mount
   useEffect(() => {
@@ -72,7 +76,7 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
   useEffect(() => {
     if (resetDetailView && resetDetailView > 0) {
       setSelectedTask(null);
-      // Don't reset the modal state during auto-refresh
+      // Don't reset modal state during auto-refresh
       // setShowCreateTaskModal(false);
     }
   }, [resetDetailView]);
@@ -88,17 +92,16 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
       id: 'select',
       header: ({ table }) => {
         const isIndeterminate = selectedRows.size > 0 && selectedRows.size < data.length;
-        const checkboxRef = React.useRef(null);
         
-        React.useEffect(() => {
-          if (checkboxRef.current) {
-            checkboxRef.current.indeterminate = isIndeterminate;
+        useEffect(() => {
+          if (selectAllCheckboxRef.current) {
+            selectAllCheckboxRef.current.indeterminate = isIndeterminate;
           }
         }, [isIndeterminate]);
         
         return (
           <input
-            ref={checkboxRef}
+            ref={selectAllCheckboxRef}
             type="checkbox"
             checked={selectedRows.size === data.length && data.length > 0}
             onChange={(e) => {
@@ -225,7 +228,7 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
               className="agent-table-select"
               value={currentAgent}
               style={(() => {
-                // Find the selected agent's color
+                // Find selected agent's color
                 const selectedAgent = availableAgents.find(a => a.name === currentAgent);
                 if (selectedAgent?.color) {
                   return {
@@ -374,7 +377,7 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
               
               // Get task number for display
               const taskNumber = getTaskNumber(depId, taskNumberMap);
-              const depTask = data.find(t => t.id === depId);
+              const depTask = data.find(task => task.id === depId);
               const depTaskName = depTask ? depTask.name : 'Unknown Task';
               
               return (
@@ -384,7 +387,7 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      // Find the task with this ID
+                      // Find task with this ID
                       if (depTask) {
                         setSelectedTask(depTask);
                       }
@@ -411,7 +414,7 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
               e.stopPropagation();
               const agentName = row.original.agent || 'task manager';
               const instruction = agentName === 'task manager' 
-                ? `Use task manager to complete this shrimp task: ${row.original.id} please when u start working mark the shrimp task as in progress`
+                ? `Use task manager to complete this shrimp task: ${row.original.id} please when u start working mark shrimp task as in progress`
                 : `use the built in subagent located in ./claude/agents/${agentName} to complete this shrimp task: ${row.original.id} please when u start working mark the shrimp task as in progress`;
               navigator.clipboard.writeText(instruction);
               const button = e.target;
@@ -423,7 +426,7 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
             title={(() => {
               const agentName = row.original.agent || 'task manager';
               return agentName === 'task manager'
-                ? `Use task manager to complete this shrimp task: ${row.original.id} please when u start working mark the shrimp task as in progress`
+                ? `Use task manager to complete this shrimp task: ${row.original.id} please when u start working mark shrimp task as in progress`
                 : `use the built in subagent located in ./claude/agents/${agentName} to complete this shrimp task: ${row.original.id} please when u start working mark the shrimp task as in progress`;
             })()}
           >
@@ -479,40 +482,112 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
     },
   });
 
-  if (data.length === 0) {
-    return (
-      <div className="empty-state">
-        <div className="empty-state-icon">📋</div>
-        <div className="empty-state-title">{t('empty.noTasksFound')}</div>
-        <div className="empty-state-message">
-          {t('noTasksMessage')}
-        </div>
-      </div>
-    );
-  }
+  // Bulk assign agents function
+  const handleBulkAssignAgents = useCallback(async () => {
+    const selectedTaskIds = Array.from(selectedRows);
+    if (selectedTaskIds.length === 0) return;
 
-  // If a task is selected, show the detail view or edit view
+    // Show loading state
+    setLoading(true);
+    
+    try {
+      // Call API to assign agents using AI
+      const response = await fetch('/api/ai-assign-agents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          projectId: profileId,
+          taskIds: selectedTaskIds
+        })
+      });
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        throw new Error('Server returned non-JSON response');
+      }
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        // Success! Show success message
+        if (showToast) {
+          showToast('success', `Successfully assigned agents to ${result.updatedCount} tasks using AI`);
+        }
+        
+        // Refresh task data to show updated agents
+        if (onTaskSaved) {
+          onTaskSaved();
+        }
+        
+        // Clear selection
+        setSelectedRows(new Set());
+        setShowBulkActions(false);
+      } else {
+        // Handle error response
+        if (result.error === 'OpenAI API key not configured') {
+          // Show modal with setup instructions
+          const modal = document.createElement('div');
+          modal.className = 'modal-overlay';
+          modal.innerHTML = `
+            <div class="modal-content error-modal">
+              <h2>❌ OpenAI API Key Required</h2>
+              <p>${result.message}</p>
+              <div class="instructions">
+                ${result.instructions.map(instruction => {
+                  // Check if this is a path line and style it differently
+                  if (instruction.includes('/home/') || instruction.includes('C:\\\\')) {
+                    return `<p class="file-path">${instruction}</p>`;
+                  }
+                  return `<p>${instruction}</p>`;
+                }).join('')}
+              </div>
+              <button class="primary-btn" onclick="this.closest('.modal-overlay').remove()">Close</button>
+            </div>
+          `;
+          document.body.appendChild(modal);
+        } else {
+          // Show general error
+          if (showToast) {
+            showToast('error', result.error || 'Failed to assign agents');
+          }
+        }
+      }
+    } catch (error) {
+      if (showToast) {
+        showToast('error', 'Network error while assigning agents: ' + error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedRows, profileId, showToast, onTaskSaved]);
+
+  // Determine what to render based on component state
+  // All hooks have been called above, so conditional returns are now safe
   if (selectedTask) {
     if (selectedTask.editMode) {
       // Import will be added at the top
       const TaskEditView = React.lazy(() => import('./TaskEditView'));
       return (
         <React.Suspense fallback={<div className="loading">Loading...</div>}>
-          <TaskEditView 
-            task={selectedTask} 
+          <TaskEditView
+            task={selectedTask}
             onBack={() => setSelectedTask(null)}
             projectRoot={projectRoot}
             profileId={profileId}
             onNavigateToTask={(taskId) => {
-              const targetTask = data.find(t => t.id === taskId);
+              const targetTask = data.find(task => task.id === taskId);
               if (targetTask) {
                 setSelectedTask(targetTask);
               }
             }}
-            taskIndex={data.findIndex(t => t.id === selectedTask.id)}
+            taskIndex={data.findIndex(task => task.id === selectedTask.id)}
             allTasks={data}
             onSave={async (updatedTask) => {
-              // Close the edit view immediately
+              // Close edit view immediately
               setSelectedTask(null);
               // Notify parent to refresh data
               if (onDetailViewChange) {
@@ -593,90 +668,19 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
     }
   }
 
-  // Bulk assign agents function
-  const handleBulkAssignAgents = useCallback(async () => {
-    const selectedTaskIds = Array.from(selectedRows);
-    if (selectedTaskIds.length === 0) return;
+  if (data.length === 0) {
+    return (
+      <div className="empty-state">
+        <div className="empty-state-icon">📋</div>
+        <div className="empty-state-title">{t('empty.noTasksFound')}</div>
+        <div className="empty-state-message">
+          {t('noTasksMessage')}
+        </div>
+      </div>
+    );
+  }
 
-    // Show loading state
-    setLoading(true);
-    
-    try {
-      // Call API to assign agents using AI
-      const response = await fetch('/api/ai-assign-agents', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          projectId: profileId,
-          taskIds: selectedTaskIds
-        })
-      });
-
-      // Check if response is JSON
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        throw new Error('Server returned non-JSON response');
-      }
-
-      const result = await response.json();
-      
-      if (response.ok) {
-        // Success! Show success message
-        if (showToast) {
-          showToast('success', `Successfully assigned agents to ${result.updatedCount} tasks using AI`);
-        }
-        
-        // Refresh the task data to show updated agents
-        if (onTaskSaved) {
-          onTaskSaved();
-        }
-        
-        // Clear selection
-        setSelectedRows(new Set());
-        setShowBulkActions(false);
-      } else {
-        // Handle error response
-        if (result.error === 'OpenAI API key not configured') {
-          // Show modal with setup instructions
-          const modal = document.createElement('div');
-          modal.className = 'modal-overlay';
-          modal.innerHTML = `
-            <div class="modal-content error-modal">
-              <h2>❌ OpenAI API Key Required</h2>
-              <p>${result.message}</p>
-              <div class="instructions">
-                ${result.instructions.map(instruction => {
-                  // Check if this is a path line and style it differently
-                  if (instruction.includes('/home/') || instruction.includes('C:\\\\')) {
-                    return `<p class="file-path">${instruction}</p>`;
-                  }
-                  return `<p>${instruction}</p>`;
-                }).join('')}
-              </div>
-              <button class="primary-btn" onclick="this.closest('.modal-overlay').remove()">Close</button>
-            </div>
-          `;
-          document.body.appendChild(modal);
-        } else {
-          // Show general error
-          if (showToast) {
-            showToast('error', result.error || 'Failed to assign agents');
-          }
-        }
-      }
-    } catch (error) {
-      if (showToast) {
-        showToast('error', 'Network error while assigning agents: ' + error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedRows, profileId, showToast, onTaskSaved]);
-
-  // Otherwise, show the table
+  // Otherwise, show table
   return (
     <>
       {showCreateTaskModal && (
