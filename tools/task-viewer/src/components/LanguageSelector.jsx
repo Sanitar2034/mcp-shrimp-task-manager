@@ -43,9 +43,6 @@ function LanguageSelector() {
     );
   });
 
-  // Debug logging
-  console.log('Available languages:', availableLanguages);
-  console.log('Current language:', currentLanguage);
 
   // Focus search input when dropdown opens
   useEffect(() => {

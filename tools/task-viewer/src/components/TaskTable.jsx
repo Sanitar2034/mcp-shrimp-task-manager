@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -41,30 +41,28 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
           setAvailableAgents(agents);
         }
       } catch (err) {
-        console.error('Error loading agents:', err);
+        if (showToast) {
+          showToast('Error loading agents: ' + err.message, 'error');
+        }
       }
     };
     
     loadAgents();
-  }, [profileId]);
+  }, [profileId, showToast]);
   
   // Notify parent when entering/exiting edit mode
   useEffect(() => {
-    if (selectedTask) {
-      if (selectedTask.editMode) {
-        // Entering edit mode
-        if (onDetailViewChange) {
+    if (onDetailViewChange) {
+      if (selectedTask) {
+        if (selectedTask.editMode) {
+          // Entering edit mode
           onDetailViewChange(true, true, selectedTask?.id);
-        }
-      } else {
-        // In detail view but not edit mode
-        if (onDetailViewChange) {
+        } else {
+          // In detail view but not edit mode
           onDetailViewChange(true, false, selectedTask?.id);
         }
-      }
-    } else {
-      // Not in any detail view
-      if (onDetailViewChange) {
+      } else {
+        // Not in any detail view
         onDetailViewChange(false, false, null);
       }
     }
@@ -72,9 +70,7 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
   
   // Reset selected task when parent requests it
   useEffect(() => {
-    console.log('TaskTable: resetDetailView changed to:', resetDetailView);
     if (resetDetailView && resetDetailView > 0) {
-      console.log('TaskTable: Resetting selected task to null');
       setSelectedTask(null);
       // Don't reset the modal state during auto-refresh
       // setShowCreateTaskModal(false);
@@ -86,12 +82,6 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
     createTaskModalRef.current = showCreateTaskModal;
   }, [showCreateTaskModal]);
   
-  // Notify parent when detail view changes
-  useEffect(() => {
-    if (onDetailViewChange) {
-      onDetailViewChange(!!selectedTask, selectedTask?.editMode || false, selectedTask?.id || null);
-    }
-  }, [selectedTask, onDetailViewChange]);
   // Define table columns configuration with custom cell renderers
   const columns = useMemo(() => [
     {
@@ -604,7 +594,7 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
   }
 
   // Bulk assign agents function
-  const handleBulkAssignAgents = async () => {
+  const handleBulkAssignAgents = useCallback(async () => {
     const selectedTaskIds = Array.from(selectedRows);
     if (selectedTaskIds.length === 0) return;
 
@@ -628,7 +618,6 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         const text = await response.text();
-        console.error('Non-JSON response:', text);
         throw new Error('Server returned non-JSON response');
       }
 
@@ -679,17 +668,15 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
         }
       }
     } catch (error) {
-      console.error('Error assigning agents:', error);
       if (showToast) {
-        showToast('error', 'Network error while assigning agents');
+        showToast('error', 'Network error while assigning agents: ' + error.message);
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedRows, profileId, showToast, onTaskSaved]);
 
   // Otherwise, show the table
-  console.log('TaskTable render: showCreateTaskModal:', showCreateTaskModal);
   return (
     <>
       {showCreateTaskModal && (
@@ -723,14 +710,7 @@ function TaskTable({ data, globalFilter, onGlobalFilterChange, projectRoot, onDe
         <button
           className="create-task-button"
           onClick={() => {
-            console.log('Create task button clicked');
-            console.log('Before setShowCreateTaskModal, showCreateTaskModal:', showCreateTaskModal);
             setShowCreateTaskModal(true);
-            console.log('After setShowCreateTaskModal, showCreateTaskModal should be true');
-            // Force a re-render
-            setTimeout(() => {
-              console.log('In setTimeout, showCreateTaskModal should be true');
-            }, 100);
           }}
           title={t('createTask.title')}
         >

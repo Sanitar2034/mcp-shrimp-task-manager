@@ -198,6 +198,7 @@ async function loadGlobalSettings() {
       apiPort: 80,
       apiPath: "/v1/chat/completions",
       apiProtocol: "https",
+      aiModel: "glm-4-6",
       lastUpdated: getLocalISOString(),
       version: VERSION,
     };
@@ -1962,8 +1963,12 @@ async function startServer() {
 
           // Call OpenAI API using https module
 
+          // Get AI model from global settings
+          const settingsForModel = await loadGlobalSettings();
+          const aiModel = settingsForModel.aiModel || "glm-4-6";
+
           const openAIData = JSON.stringify({
-            model: "glm-4-6",
+            model: aiModel,
             messages: [
               {
                 role: "system",
@@ -1980,11 +1985,11 @@ async function startServer() {
           });
 
           // Get API settings from global settings
-          const globalSettings = await loadGlobalSettings();
-          const apiHostname = globalSettings.apiHostname || "localhost";
-          const apiPort = globalSettings.apiPort || 3005;
-          const apiPath = globalSettings.apiPath || "/v1/chat/completions";
-          const apiProtocol = globalSettings.apiProtocol || "http";
+          const settingsForApi = await loadGlobalSettings();
+          const apiHostname = settingsForApi.apiHostname || "localhost";
+          const apiPort = settingsForApi.apiPort || 3005;
+          const apiPath = settingsForApi.apiPath || "/v1/chat/completions";
+          const apiProtocol = settingsForApi.apiProtocol || "http";
 
           const openAIPromise = new Promise((resolve, reject) => {
             const options = {
@@ -1994,7 +1999,7 @@ async function startServer() {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${openAIKey}`,
+                Authorization: `Bearer ${aiKey}`,
                 "Content-Length": Buffer.byteLength(openAIData),
               },
             };
@@ -2097,7 +2102,7 @@ async function startServer() {
             context: context?.currentPage,
           });
 
-          // Validate OpenAI key
+          // Validate AI key
           const apiKey =
             openAIKey ||
             process.env.OPENAI_API_KEY ||
@@ -2107,9 +2112,20 @@ async function startServer() {
             res.writeHead(400, { "Content-Type": "application/json" });
             res.end(
               JSON.stringify({
-                error: "OpenAI API key not configured",
+                error: "AI API key not configured",
                 message:
-                  "Please configure your OpenAI API key in Settings → Global Settings",
+                  "Please configure your AI API key in Settings → Global Settings",
+                instructions: [
+                  "1. Go to Settings → Global Settings in the app",
+                  '   Enter your API key in the "AI API Key" field',
+                  "   Click Save",
+                  "",
+                  "2. Or create a .env file in the task viewer directory:",
+                  "   Add: OPENAI_API_KEY=sk-your-api-key-here",
+                  "",
+                  "3. Get your API key from:",
+                  "   https://platform.openai.com/api-keys",
+                ],
               })
             );
             return;
@@ -2297,9 +2313,13 @@ async function startServer() {
             "- Use emojis (📋 📝 ⚠️ 🔧 💡 🎯) to add visual context\n";
           systemPrompt += "- Use headers (##) for section organization\n";
 
+          // Get AI model from global settings
+          const settingsForChatModel = await loadGlobalSettings();
+          const aiModel = settingsForChatModel.aiModel || "glm-4-6";
+
           // Call OpenAI API
           const openAIData = JSON.stringify({
-            model: "glm-4-6",
+            model: aiModel,
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: message },
@@ -2309,11 +2329,11 @@ async function startServer() {
           });
 
           // Get API settings from global settings
-          const globalSettings = await loadGlobalSettings();
-          const apiHostname = globalSettings.apiHostname || "localhost";
-          const apiPort = globalSettings.apiPort || 3005;
-          const apiPath = globalSettings.apiPath || "/v1/chat/completions";
-          const apiProtocol = globalSettings.apiProtocol || "http";
+          const settingsForChatApi = await loadGlobalSettings();
+          const apiHostname = settingsForChatApi.apiHostname || "localhost";
+          const apiPort = settingsForChatApi.apiPort || 3005;
+          const apiPath = settingsForChatApi.apiPath || "/v1/chat/completions";
+          const apiProtocol = settingsForChatApi.apiProtocol || "http";
 
           const openAIResponse = await new Promise((resolve, reject) => {
             const options = {

@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 function GlobalSettingsView({ showToast }) {
   const { t } = useTranslation();
   const [claudeFolderPath, setClaudeFolderPath] = useState('');
-  const [openAIKey, setOpenAIKey] = useState('');
+  const [aiKey, setAiKey] = useState('');
+  const [aiModel, setAiModel] = useState('glm-4-6');
   const [apiHostname, setApiHostname] = useState('localhost');
   const [apiPort, setApiPort] = useState(3005);
   const [apiPath, setApiPath] = useState('/v1/chat/completions');
@@ -26,7 +27,8 @@ function GlobalSettingsView({ showToast }) {
       if (response.ok) {
         const settings = await response.json();
         setClaudeFolderPath(settings.claudeFolderPath || '');
-        setOpenAIKey(settings.openAIKey || '');
+        setAiKey(settings.openAIKey || '');
+        setAiModel(settings.aiModel || 'glm-4-6');
         setApiHostname(settings.apiHostname || 'localhost');
         setApiPort(settings.apiPort || 3005);
         setApiPath(settings.apiPath || '/v1/chat/completions');
@@ -59,7 +61,8 @@ function GlobalSettingsView({ showToast }) {
         },
         body: JSON.stringify({
           claudeFolderPath: claudeFolderPath,
-          openAIKey: openAIKey,
+          openAIKey: aiKey,
+          aiModel: aiModel,
           apiHostname: apiHostname,
           apiPort: apiPort,
           apiPath: apiPath,
@@ -115,9 +118,9 @@ function GlobalSettingsView({ showToast }) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="openAIKey">
-              OpenAI API Key
-              {openAIKey && (
+            <label htmlFor="aiKey">
+              AI API Key
+              {aiKey && (
                 <span style={{ 
                   marginLeft: '10px', 
                   fontSize: '12px', 
@@ -131,11 +134,11 @@ function GlobalSettingsView({ showToast }) {
             <div className="api-key-input-wrapper">
               <input
                 type={showApiKey ? "text" : "password"}
-                id="openAIKey"
-                value={openAIKey}
-                onChange={(e) => setOpenAIKey(e.target.value)}
+                id="aiKey"
+                value={aiKey}
+                onChange={(e) => setAiKey(e.target.value)}
                 placeholder="sk-proj-..."
-                title="OpenAI API Key for AI agent assignment"
+                title="AI API Key for AI agent assignment"
                 disabled={saving}
                 className="api-key-input"
               />
@@ -149,12 +152,29 @@ function GlobalSettingsView({ showToast }) {
               </button>
             </div>
             <span className="form-hint">
-              <strong>Used for:</strong> AI-powered agent assignment to automatically match agents to tasks.<br/>
+              <strong>Used for:</strong> AI-powered agent assignment and chat functionality.<br/>
               <strong>Get your key:</strong>{' '}
               <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">
                 platform.openai.com/api-keys
               </a>
-              {' '}(requires OpenAI account)
+              {' '}(requires AI service account)<br/>
+              <strong>Note:</strong> The API key is required for the chat feature to work.
+            </span>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="aiModel">AI Model:</label>
+            <input
+              type="text"
+              id="aiModel"
+              value={aiModel}
+              onChange={(e) => setAiModel(e.target.value)}
+              placeholder="glm-4-6"
+              title="AI model name for chat and agent assignment"
+              disabled={saving}
+            />
+            <span className="form-hint">
+              <strong>Model name:</strong> Enter the AI model to use for chat and agent assignment (e.g., glm-4-6)
             </span>
           </div>
 

@@ -60,6 +60,7 @@ data/*
 # Claude and MCP files
 .claude/
 .mcp.json
+*.md
 
 # Audio files
 *.wav 

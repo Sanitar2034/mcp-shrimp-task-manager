@@ -20,12 +20,13 @@ function ChatAgent({
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [selectedAgents, setSelectedAgents] = useState({});
+  const [selectedAgents, setSelectedAgents] = useState({ ai: true });
   const [availableAgents, setAvailableAgents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [agentsLoading, setAgentsLoading] = useState(false);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
-  const [openAIKey, setOpenAIKey] = useState('');
+  const [aiKey, setAiKey] = useState('');
+  const [aiModel, setAiModel] = useState('');
   const [agentsExpanded, setAgentsExpanded] = useState(() => {
     // Load expanded state from localStorage
     const saved = localStorage.getItem('chatAgentsExpanded');
@@ -45,25 +46,39 @@ function ChatAgent({
     if (saved) {
       try {
         const selections = JSON.parse(saved);
-        setSelectedAgents(selections);
+        // Ensure only valid agents are selected
+        const validSelections = { ai: selections.ai || false };
+        Object.keys(selections).forEach(key => {
+          if (key !== 'ai' && availableAgents.some(agent => agent.id === key)) {
+            validSelections[key] = selections[key];
+          }
+        });
+        setSelectedAgents(validSelections);
       } catch {
-        setSelectedAgents({ openai: true });
+        setSelectedAgents({ ai: true });
       }
     } else {
-      setSelectedAgents({ openai: true });
+      setSelectedAgents({ ai: true });
     }
   };
 
   // Save agent selections for this project
   const saveSelections = (selections) => {
-    localStorage.setItem(`chatAgentSelections_${profileId}`, JSON.stringify(selections));
+    // Only save valid selections (ai + available agents)
+    const validSelections = { ai: selections.ai || false };
+    Object.keys(selections).forEach(key => {
+      if (key !== 'ai' && availableAgents.some(agent => agent.id === key)) {
+        validSelections[key] = selections[key];
+      }
+    });
+    localStorage.setItem(`chatAgentSelections_${profileId}`, JSON.stringify(validSelections));
   };
 
   // Load available agents and OpenAI key when profile changes
   useEffect(() => {
     if (profileId) {
       loadAvailableAgents();
-      loadOpenAIKey();
+      loadAISettings();
       loadSavedSelections();
       
       // Clear messages when switching projects to avoid confusion
@@ -105,15 +120,16 @@ function ChatAgent({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadOpenAIKey = async () => {
+  const loadAISettings = async () => {
     try {
       const response = await fetch('/api/global-settings');
       if (response.ok) {
         const settings = await response.json();
-        setOpenAIKey(settings.openAIKey || '');
+        setAiKey(settings.openAIKey || '');
+        setAiModel(settings.aiModel || 'glm-4-6');
       }
     } catch (err) {
-      console.error('Error loading OpenAI key:', err);
+      console.error('Error loading AI settings:', err);
     }
   };
 
@@ -296,7 +312,6 @@ function ChatAgent({
       }
 
       const contextData = getPageContext();
-      console.log('Sending context to AI:', contextData);
 
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -308,13 +323,15 @@ function ChatAgent({
           agents: selectedAgentsList,
           context: contextData,
           profileId,
-          openAIKey,
+          openAIKey: aiKey, // Use openAIKey to match server expectations
+          aiModel,
           availableAgents: availableAgents
         })
       });
 
       if (!response.ok) {
-        throw new Error(t('chat.responseError'));
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -350,7 +367,17 @@ function ChatAgent({
 
     } catch (err) {
       console.error('Error sending message:', err);
-      showToast(err.message || t('chat.sendError'), 'error');
+      
+      // Handle API key error specifically
+      if (err.message && err.message.includes('AI API key not configured')) {
+        showToast(
+          'AI API key not configured. Please go to Settings → Global Settings to add your API key.',
+          'error',
+          10000 // Show for 10 seconds
+        );
+      } else {
+        showToast(err.message || t('chat.sendError'), 'error');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -515,19 +542,25 @@ function ChatAgent({
                   {agentsLoading && <span className="agents-loading"> {t('chat.loadingAgents')}</span>}
                 </span>
                 <span className="agents-count">
-                  {Object.values(selectedAgents).filter(v => v).length} {t('chat.selected')}
+                  {(() => {
+                    const aiCount = selectedAgents.ai ? 1 : 0;
+                    const projectCount = Object.entries(selectedAgents)
+                      .filter(([id, selected]) => selected && id !== 'ai')
+                      .length;
+                    return aiCount + projectCount;
+                  })()} {t('chat.selected')}
                 </span>
               </div>
               {agentsExpanded && (
                 <div className="agents-checkboxes">
-                <label className="agent-checkbox" title="OpenAI GPT-4 - General purpose AI assistant">
+                <label className="agent-checkbox" title={`${aiModel} - AI assistant`}>
                   <input
                     type="checkbox"
-                    checked={selectedAgents.openai || false}
-                    onChange={() => toggleAgent('openai')}
+                    checked={selectedAgents.ai || false}
+                    onChange={() => toggleAgent('ai')}
                   />
-                  <span className="agent-name openai-agent">
-                    🤖 OpenAI GPT-4
+                  <span className="agent-name ai-agent">
+                    🤖 {aiModel}
                   </span>
                 </label>
                 {availableAgents.map(agent => (
@@ -587,7 +620,7 @@ function ChatAgent({
                   <strong>{t('chat.contextProject')}</strong> {profileName || profileId}<br/>
                   <strong>{t('chat.contextContext')}</strong> {currentPage}
                   {currentTask && ` - Task: ${currentTask.name}`}<br/>
-                  <strong>{t('chat.contextAvailableAgents')}</strong> {availableAgents.length + 1} (OpenAI + {availableAgents.length} {t('chat.projectAgents')})
+                  <strong>{t('chat.contextAvailableAgents')}</strong> {availableAgents.length + 1} (AI + {availableAgents.length} {t('chat.projectAgents')})
                 </p>
               </div>
             )}
